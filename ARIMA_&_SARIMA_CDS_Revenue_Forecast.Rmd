@@ -1,0 +1,110 @@
+---
+title: "non-seasonal ARIMA"
+output: html_document
+date: "2024-04-04"
+---
+
+```{r import packages message=FALSE, warning=FALSE}
+install.packages("tseries")
+install.packages("forecast")
+library(tidyverse)
+library(tseries)
+library(forecast)
+```
+
+
+```{r import packages message=FALSE, warning=FALSE}
+library(broom)
+library(modelsummary)
+library(ggplot2)
+```
+
+```{r load dataset}
+cds <- read_csv("data/cds.csv")
+cds
+```
+```{r show first few data}
+cds %>% head()
+```
+
+```{r clean data to put for prophet}
+#to use prophet, table must have only 2 column names: ds and y
+#ds = time series
+#y = y variable
+#datetime data must be in the fotrmat of year-month-date in order to use Prophet
+```
+
+```{r choose only some columns}
+#show all columns and data types
+cds %>%  glimpse()
+
+#select only useful columns and rename
+cds_only <-cds %>% 
+  filter(bu == 'CDS') %>% 
+  select(captured_date, Revenue) %>% 
+  rename(ds = captured_date, y = Revenue)
+
+#filter ต้องมาก่ อนselect เสมอ!
+cds_only %>% head()
+
+#show data type
+cds_only %>% glimpse()
+```
+```{r convert to date time format}
+# Convert ds column to date format
+cds_only$ds <- as.Date(cds_only$ds)
+
+cds_only %>% glimpse()
+```
+```{r check data type}
+cds_only %>% class()
+```
+```{r Need to transform from dataframe to time series object first before doing ARIMA model}
+#Need to transform from dataframe to time series object first before doing ARIMA model
+cds_ts <- ts(cds_only[,'y'], start =c(2023,1,1), frequency = 365)
+```
+
+```{r}
+autoplot(cds_ts) +
+  ggtitle("CDS Revenue") +
+  ylab("revenue")
+```
+
+
+```{r buil ARIMA model}
+fit_ARIMA <- auto.arima(cds_ts, seasonal = FALSE)
+print(summary(fit_ARIMA))
+#insights is that the best model recommended is Non-seasonal ARIMA with
+#AR = 0
+#First difference = 1
+#MA = 2
+```
+```{r check the residuals}
+checkresiduals(fit_ARIMA)
+```
+```
+
+```{r build SARIMA model}
+fit_SARIMA <- auto.arima(cds_ts, seasonal = TRUE)
+print(summary(fit_SARIMA))
+#insights is that the best model recommended is Non-seasonal ARIMA with
+#AR = 0
+#First difference = 1
+#MA = 2
+```
+
+```{r check the residuals}
+checkresiduals(fit_SARIMA)
+```
+
+```{r The model is oK, so start Forecasting}
+fcast  <- forecast(fit_ARIMA, h = 30)
+#h = number of days that you wanna forecast
+plot(fcast)
+```
+
+```{r}
+print(summary(fcast))
+```
+
+
