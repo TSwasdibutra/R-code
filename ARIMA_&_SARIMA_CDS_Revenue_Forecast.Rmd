@@ -82,7 +82,6 @@ print(summary(fit_ARIMA))
 ```{r check the residuals}
 checkresiduals(fit_ARIMA)
 ```
-```
 
 ```{r build SARIMA model}
 fit_SARIMA <- auto.arima(cds_ts, seasonal = TRUE)
@@ -92,8 +91,7 @@ print(summary(fit_SARIMA))
 #First difference = 1
 #MA = 2
 ```
-
-```{r check the residuals}
+```{r check residual}
 checkresiduals(fit_SARIMA)
 ```
 
@@ -102,7 +100,6 @@ fcast  <- forecast(fit_ARIMA, h = 30)
 #h = number of days that you wanna forecast
 plot(fcast)
 ```
-
 ```{r}
 print(summary(fcast))
 ```
