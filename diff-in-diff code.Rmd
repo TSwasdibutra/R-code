@@ -1,0 +1,79 @@
+---
+title: "CDS diff-in-diff"
+output: html_document
+date: "2024-03-31"
+---
+
+```{r shortcut summary, message=FALSE, warning=FALSE}
+#new code chunk : ctrl+alt+i 
+#for <- : alt+minus sign
+#for running the cell : ctrl+enter
+#for %>% : ctrl+shift+m
+#run all command : ctrl+alt+r
+```
+
+```{r load library, message=FALSE, warning=FALSE}
+install.packages("tidyverse")
+install.packages("broom")
+install.packages("modelsummary")
+install.packages("scales")
+
+library(tidyverse)
+library(broom)
+library(modelsummary)
+library(scales)
+```
+
+```{r load dataset}
+df <- read.csv("data/cds_did.csv")
+```
+
+```{r rename column}
+df_edit <- df %>% 
+  rename(after_reduction = Being.Post.spend.reduction,
+         cds = Being.CDS)
+```
+
+```{r EDA}
+ggplot(df_edit, aes(x = Revenue)) +
+  geom_histogram(color = "white", boundary = 0)
+```
+```{r show graph by treatment vs control group}
+ggplot(df_edit, aes(x = Revenue)) +
+  geom_histogram(color = "white", boundary = 0) +
+  facet_wrap(vars(cds))
+```
+
+```{r show graph by pre vs post spending cut}
+ggplot(df_edit, aes(x = Revenue)) +
+  geom_histogram(color = "white", boundary = 0) +
+  facet_wrap(vars(after_reduction))
+```
+
+```{r}
+ggplot(df_edit, aes(x = after_reduction, y = Revenue)) +
+  stat_summary(geom = "pointrange", fun.data = "mean_se", fun.args = list(mult = 1.96))
+```
+
+```{r}
+ggplot(df_edit, aes(x = cds, y = Revenue)) +
+  stat_summary(geom = "pointrange", fun.data = "mean_se", fun.args = list(mult = 1.96))]
+
+#the graph shows that there is a significant different between control and treatment group
+```
+
+```{r}
+ggplot(df_edit, aes(x = cds, y = Revenue)) +
+  stat_summary(geom = "pointrange", fun.data = "mean_se", fun.args = list(mult = 1.96)) +
+  facet_wrap(vars(after_reduction))
+```
+
+```{r diff-in-diff}
+model <- lm(Revenue ~ cds + after_reduction + (cds*after_reduction),
+            data = df_edit)
+tidy(model)
+```
+
+#insights = the spend reduction cause revenue to decrease by around 920k
+
+#to add control variables (confounders) in the above DiD model 

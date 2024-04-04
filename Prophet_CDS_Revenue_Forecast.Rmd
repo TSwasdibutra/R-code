@@ -1,0 +1,76 @@
+---
+title: "Prophet"
+output: html_document
+date: "2024-04-04"
+---
+
+```{r import packages message=FALSE, warning=FALSE}
+install.packages("prophet")
+library(prophet)
+library(tidyverse)
+```
+
+
+```{r import packages message=FALSE, warning=FALSE}
+library(broom)
+library(modelsummary)
+```
+
+```{r load dataset}
+cds <- read_csv("data/cds.csv")
+cds
+```
+```{r show first few data}
+cds %>% head()
+```
+
+```{r clean data to put for prophet}
+#to use prophet, table must have only 2 column names: ds and y
+#ds = time series
+#y = y variable
+#datetime data must be in the fotrmat of year-month-date in order to use Prophet
+```
+
+```{r choose only some columns}
+#show all columns and data types
+cds %>%  glimpse()
+
+#select only useful columns and rename
+cds_only <-cds %>% 
+  filter(bu == 'CDS') %>% 
+  select(captured_date, Revenue) %>% 
+  rename(ds = captured_date, y = Revenue)
+
+#filter ต้องมาก่ อนselect เสมอ!
+cds_only %>% head()
+
+#show data type
+cds_only %>% glimpse()
+```
+```{r convert to date time format}
+# Convert ds column to date format
+cds_only$ds <- as.Date(cds_only$ds)
+
+cds_only %>% glimpse()
+```
+
+
+```{r build prophet model}
+model1 <- cds_only %>% prophet()
+future1 <- make_future_dataframe(model1, periods = 90)
+future1 %>% tail()
+
+#forecast
+forecast1 <- predict(model1, future1)
+tail(forecast1[c('ds','yhat')])
+```
+```{r plot the forecast}
+dyplot.prophet(model1, forecast1)
+```
+```{r see components of the forecast}
+prophet_plot_components(model1, forecast1)
+#insights: 
+#1. the trend of revenue going down
+#2. revenue usually spike on wednesday and Friday of the week
+```
+
